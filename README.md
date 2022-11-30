@@ -1,54 +1,75 @@
 # curl-http3
-[![](https://img.shields.io/docker/cloud/build/ymuski/curl-http3?style=flat-square)](https://hub.docker.com/r/ymuski/curl-http3)
-[![](https://img.shields.io/docker/cloud/automated/ymuski/curl-http3?style=flat-square)](https://hub.docker.com/r/ymuski/curl-http3)
-[![](https://img.shields.io/docker/pulls/ymuski/curl-http3?style=flat-square)](https://hub.docker.com/r/ymuski/curl-http3)
+[![](https://img.shields.io/docker/pulls/rmarx/curl-http3?style=flat-square)](https://hub.docker.com/r/rmarx/curl-http3)
 
-Docker image of `curl` compiled with  `BoringSSL` and `quiche/0.8.0` for **HTTP3 support**, `httpstat` for visualization.
+Docker image of `curl` compiled with  `BoringSSL` and `quiche` for **HTTP3 support**.
 
-Link for [curl + http3 manual](https://github.com/curl/curl/blob/master/docs/HTTP3.md#quiche-version)
+Inspired by [yurymuski/curl-http3](https://github.com/yurymuski/curl-http3), mainly updates to latest curl and quiche versions to add support for the `h3` alpn. Removes httpstat support. 
+
+Original documentation at [curl + http3 manual](https://github.com/curl/curl/blob/master/docs/HTTP3.md#quiche-version)
 
 **Usage**
 
-`docker run -it --rm ymuski/curl-http3 curl -V`
+Building it yourself locally from this repository:
+
+`docker build -t rmarx/curl-http3 .`
+
+Running it directly from DockerHub:
+
+`docker run -it --rm rmarx/curl-http3 curl -V`
 ```
-curl 7.76.1-DEV (x86_64-pc-linux-gnu) libcurl/7.76.0-DEV BoringSSL quiche/0.8.0
+curl 7.87.0-DEV (aarch64-unknown-linux-gnu) libcurl/7.87.0-DEV BoringSSL quiche/0.16.0
 Release-Date: [unreleased]
-Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp 
-Features: alt-svc AsynchDNS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL UnixSockets
+Protocols: dict file ftp ftps gopher gophers http https imap imaps mqtt pop3 pop3s rtsp smb smbs smtp smtps telnet tftp
+Features: alt-svc AsynchDNS HSTS HTTP3 HTTPS-proxy IPv6 Largefile NTLM NTLM_WB SSL threadsafe UnixSockets
 ```
 
 
-`docker run -it --rm ymuski/curl-http3 curl -IL https://blog.cloudflare.com --http3`
+`docker run -it --rm rmarx/curl-http3 curl -IL https://daniel.haxx.se --http3`
 
-`docker run -it --rm ymuski/curl-http3 curl -IL https://yurets.pro --http3`
+`docker run -it --rm rmarx/curl-http3 curl -IL https://www.youtube.com --http3`
+
+Add `--verbose` for additional protocol level details.
 
 ```
 
 HTTP/3 200
-date: Tue, 30 Mar 2021 14:30:08 GMT
-content-type: text/html; charset=UTF-8
-set-cookie: __cfduid=d3fa946aadf6d55fcb8e031c9d3472f381617114608; expires=Thu, 29-Apr-21 14:30:08 GMT; path=/; domain=.yurets.pro; HttpOnly; SameSite=Lax; Secure
-x-powered-by: Express
-cache-control: public, max-age=0
-last-modified: Sat, 23 Jan 2021 22:47:49 GMT
+content-length: 5802
+server: nginx/1.21.1
+content-type: text/html
+last-modified: Thu, 17 Nov 2022 14:10:32 GMT
+etag: "16aa-5edab26f0c089"
+cache-control: max-age=60
+expires: Tue, 29 Nov 2022 07:28:36 GMT
+strict-transport-security: max-age=31536000
+via: 1.1 varnish, 1.1 varnish
+accept-ranges: bytes
+date: Wed, 30 Nov 2022 13:54:37 GMT
+age: 33
+x-served-by: cache-bma1640-BMA, cache-bru1480057-BRU
+x-cache: HIT, HIT
+x-cache-hits: 3, 1
+x-timer: S1669816477.087234,VS0,VE24
 vary: Accept-Encoding
-strict-transport-security: max-age=15552000; includeSubDomains; preload
-cf-cache-status: DYNAMIC
-cf-request-id: 092523ca150000414bd7198000000001
-expect-ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
-report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=fPA8tI4jfvl0nSQqFh0HtbJp1iYd%2FlhEBduxdQ5QDHhFXs8pDsejYxasX2HCULGutzSzg22bg79iMEl5Qz1b3NrlHhwx%2BXvv67kP"}]}
-nel: {"report_to":"cf-nel","max_age":604800}
-x-content-type-options: nosniff
-server: cloudflare
-cf-ray: 638208bcea6b414b-HAM
-alt-svc: h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
 
 ```
 
-**httpstat support**
+**Enabling qlog**
 
-`docker run -it --rm ymuski/curl-http3 ./httpstat.sh -ILv https://blog.cloudflare.com --http3`
+qlog is a verbose JSON-based logging format specifically for QUIC and HTTP/3.
+qlog output can be used together with tools like [qvis.quictools.info](https://qvis.quictools.info) to analyze QUIC and HTTP/3 behaviour. 
 
-`docker run -it --rm ymuski/curl-http3 ./httpstat.sh -ILv https://yurets.pro --http3`
+This build of curl supports qlog output, which can be enabled by setting the `QLOGDIR=/your/dir/here` environment variable.
+For example:
 
-![](httpstat.png?raw=true "HTTPSTAT H3")
+```
+# opens a shell inside the container
+docker run -it --rm rmarx/curl-http3 bash
+# will put a .qlog output file in /srv (you can't choose the filename, only the directory)
+QLOGDIR=/srv curl -IL https://daniel.haxx.se --http3
+```
+
+You can also get the qlog output to the host system directly by mounting a folder as such:
+
+`docker run --volume $(pwd)/qlogs_on_host:/srv -it --rm --env QLOGDIR=/srv rmarx/curl-http3 curl -IL https://daniel.haxx.se --http3`
+
