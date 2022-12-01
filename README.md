@@ -7,7 +7,7 @@ Inspired by [yurymuski/curl-http3](https://github.com/yurymuski/curl-http3), mai
 
 Original documentation at [curl + http3 manual](https://github.com/curl/curl/blob/master/docs/HTTP3.md#quiche-version)
 
-**Usage**
+## Usage
 
 Building it yourself locally from this repository:
 
@@ -54,7 +54,7 @@ alt-svc: h3=":443";ma=86400,h3-29=":443";ma=86400,h3-27=":443";ma=86400
 
 ```
 
-**Enabling qlog**
+## Enabling qlog
 
 qlog is a verbose JSON-based logging format specifically for QUIC and HTTP/3.
 qlog output can be used together with tools like [qvis.quictools.info](https://qvis.quictools.info) to analyze QUIC and HTTP/3 behaviour. 
@@ -73,3 +73,10 @@ You can also get the qlog output to the host system directly by mounting a folde
 
 `docker run --volume $(pwd)/qlogs_on_host:/srv -it --rm --env QLOGDIR=/srv rmarx/curl-http3 curl -IL https://daniel.haxx.se --http3`
 
+## Testing alt-svc
+
+In the above examples, we force the use of HTTP/3 through the `--http3` parameter. Normally however, HTTP/3 support needs to be discovered first. This is done by loading the URL over HTTP/1.1 or HTTP/2 first and receiving an [`alt-svc` HTTP response header](https://www.smashingmagazine.com/2021/09/http3-practical-deployment-options-part3/#alt-svc). 
+
+This can be tested with curl using the `--alt-svc` parameter, but it seems that currently loading URLs over non-HTTP/3 seems broken when compiling curl with BoringSSL and quiche. As such, this is currently not possible with this docker build. 
+
+This was [reported to the project](https://github.com/curl/curl/issues/10013) and I'll update these instructions with `--alt-svc` examples when the issue is resolved. 
