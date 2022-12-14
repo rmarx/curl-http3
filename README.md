@@ -77,6 +77,10 @@ You can also get the qlog output to the host system directly by mounting a folde
 
 In the above examples, we force the use of HTTP/3 through the `--http3` parameter. Normally however, HTTP/3 support needs to be discovered first. This is done by loading the URL over HTTP/1.1 or HTTP/2 first and receiving an [`alt-svc` HTTP response header](https://www.smashingmagazine.com/2021/09/http3-practical-deployment-options-part3/#alt-svc). 
 
-This can be tested with curl using the `--alt-svc` parameter, but it seems that currently loading URLs over non-HTTP/3 seems broken when compiling curl with BoringSSL and quiche. As such, this is currently not possible with this docker build. 
+`curl` allows you to store the alt-svc information from the first request in a "cache file", that can then be used in a subsequent request to load over HTTP/3 without explicitly setting the `--http3` flag (better emulating the normal browser/client flow).
 
-This was [reported to the project](https://github.com/curl/curl/issues/10013) and I'll update these instructions with `--alt-svc` examples when the issue is resolved. 
+An example:
+
+`docker run -it --rm rmarx/curl-http3 bash -c "curl -IL https://daniel.haxx.se --alt-svc as.store; curl -IL https://daniel.haxx.se --alt-svc as.store; cat as.store"`
+
+This should show you a first request over HTTP/2 (or HTTP/1.1), then a request over HTTP/3, and then the contents of the `as.store` alt-svc cache file. 
