@@ -84,3 +84,19 @@ An example:
 `docker run -it --rm rmarx/curl-http3 bash -c "curl -IL https://daniel.haxx.se --alt-svc as.store; curl -IL https://daniel.haxx.se --alt-svc as.store; cat as.store"`
 
 This should show you a first request over HTTP/2 (or HTTP/1.1), then a request over HTTP/3, and then the contents of the `as.store` alt-svc cache file. 
+
+## Exporting packet captures
+
+Besides using qlog, it can be interesting to use packet capture files (.pcaps) with a tool like Wireshark to examine what's being sent over the wire.
+
+This docker container has support for tcpdump, but you need to manually start and stop it before and after running curl. Additionally, to be able to decrypt the QUIC and HTTP/3 traffic, you need to set the `SSLKEYLOGFILE` variable, which will be used to log the TLS keys. 
+
+An example:
+
+`docker run -it --rm --volume $(pwd)/pcaps_on_host:/srv --env SSLKEYLOGFILE=/srv/tls_keys.txt rmarx/curl-http3 bash -c "tcpdump -w /srv/packets.pcap -i eth0 & sleep 1; curl -IL https://daniel.haxx.se --http3; sleep 2; pkill tcpdump; sleep 2"`
+
+(note: the `sleep` calls are to give tcpdump to properly start and finish. Otherwise, some packets might be missed)
+
+You can then open the `packets.pcap` file in wireshark. To decrypt the traffic, you need to set the "(Pre)-Master-Secret log filename" in Preferences > Protocols > TLS to the exported `tls_keys.txt` file. More details on this on the [Wireshark website](https://wiki.wireshark.org/TLS) or [this blogpost](https://resources.infosecinstitute.com/topic/decrypting-ssl-tls-traffic-with-wireshark/).
+
+Note: Wireshark currently (December 2022) cannot 100% interpret the HTTP/3 part of the traffic, due to incomplete QPACK header compression support. It should still give you enough to be a very useful tool though!

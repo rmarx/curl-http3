@@ -30,9 +30,8 @@ RUN cd curl && \
     make && \
     make DESTDIR="/ubuntu/" install
 
-
 FROM ubuntu:bionic
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl tcpdump
 
 COPY --from=builder /ubuntu/usr/local/ /usr/local/
 COPY --from=builder /opt/quiche/target/release /opt/quiche/target/release
